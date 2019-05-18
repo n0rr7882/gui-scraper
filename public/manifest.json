@@ -13,5 +13,13 @@
   },
   "background": {
     "page": "background.html"
-  }
+  },
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "http://*/*",
+    "https://*/*",
+    "storage",
+    "alarms"
+  ]
 }
