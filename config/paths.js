@@ -89,7 +89,6 @@ module.exports = {
   popupHtml: resolveApp('public/popup.html'),
   newtabJs: resolveApp('src/newtab.js'),
   popupJs: resolveApp('src/popup.js'),
-  backgroundJs: resolveApp('src/background.js'),
 };
 
 

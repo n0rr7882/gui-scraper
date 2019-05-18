@@ -14,8 +14,4 @@
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },
-  "background": {
-    "scripts": ["background.js"],
-    "persistent": false
-  }
 }
