@@ -1,9 +1,9 @@
 {
-  "short_name": "MyExtension",
-  "name": "MyExtension",
+  "short_name": "GUI Scraper",
+  "name": "GUI Scraper",
   "version": "0.0.1",
   "manifest_version": 2,
-  "description": "A plain text description",
+  "description": "Web crawling automation for non-developers.",
   "icons": {
     "128": "favicon.ico"
   },
@@ -11,7 +11,7 @@
     "default_icon": "favicon.ico",
     "default_popup": "popup.html"
   },
-  "chrome_url_overrides": {
-    "newtab": "newtab.html"
-  },
+  "background": {
+    "page": "background.html"
+  }
 }

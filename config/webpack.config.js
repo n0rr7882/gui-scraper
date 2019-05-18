@@ -153,6 +153,7 @@ module.exports = function(webpackEnv) {
       index: [require.resolve('./polyfills'), paths.appIndexJs],
       newtab: [require.resolve('./polyfills'), paths.newtabJs],
       popup: [require.resolve('./polyfills'), paths.popupJs],
+      background: [require.resolve('./polyfills'), paths.backgroundJs],
     },
     output: {
       // The build folder.
@@ -486,6 +487,7 @@ module.exports = function(webpackEnv) {
       htmlPlugin({ template: paths.appHtml, chunks: ['index'], filename: 'index.html' }),
       htmlPlugin({ template: paths.newtabHtml, chunks: ['newtab'], filename: 'newtab.html' }),
       htmlPlugin({ template: paths.popupHtml, chunks: ['popup'], filename: 'popup.html' }),
+      htmlPlugin({ template: paths.backgroundHtml, chunks: ['background'], filename: 'background.html' }),
       // Inlines the webpack runtime script. This script is too small to warrant
       // a network request.
       isEnvProduction &&

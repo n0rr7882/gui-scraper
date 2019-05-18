@@ -87,8 +87,10 @@ module.exports = {
   // for chrome extensions
   newtabHtml: resolveApp('public/newtab.html'),
   popupHtml: resolveApp('public/popup.html'),
+  backgroundHtml: resolveApp('public/background.html'),
   newtabJs: resolveApp('src/newtab.js'),
   popupJs: resolveApp('src/popup.js'),
+  backgroundJs: resolveApp('src/background.js')
 };
 
 
