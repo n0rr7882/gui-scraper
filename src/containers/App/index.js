@@ -1,10 +1,4 @@
-import React from 'react';
-import './App.css';
+import App from './App'
+import './App.css'
 
-function App() {
-  return (
-    <div className="App">Main Container</div>
-  );
-}
-
-export default App;
+export default App

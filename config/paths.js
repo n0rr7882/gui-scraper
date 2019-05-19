@@ -90,9 +90,8 @@ module.exports = {
   backgroundHtml: resolveApp('public/background.html'),
   newtabJs: resolveApp('src/newtab.js'),
   popupJs: resolveApp('src/popup.js'),
-  backgroundJs: resolveApp('src/background.js')
+  backgroundJs: resolveApp('src/background.js'),
+  contentscriptJs: resolveApp('src/contentscript.js'),
 };
-
-
 
 module.exports.moduleFileExtensions = moduleFileExtensions;

@@ -1,0 +1,9 @@
+#guiScraperPointingElement {
+    position: fixed;
+    border: 2px solid slategray;
+    border-radius: 3px;
+    background-color: rgba(55, 60, 65, 0.3);
+    opacity: 0.3;
+    z-index: 999999999;
+    pointer-events: none;
+}

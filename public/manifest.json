@@ -11,6 +11,13 @@
     "default_icon": "favicon.ico",
     "default_popup": "popup.html"
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "css": ["static/css/contentscript.css"],
+      "js": ["static/js/contentscript.js"]
+    }
+  ],
   "background": {
     "page": "background.html"
   },
