@@ -36,3 +36,44 @@ export function actionTypeToTypeSetting(actionType) {
         return null
     }
 }
+
+/**
+ * 
+ * @param {Element} element 
+ */
+export function removeAllChildNodes(element) {
+    while (element.firstChild) {
+        element.removeChild(element.firstChild)
+    }
+}
+
+/**
+ * Get this elements CSS Selelctor string
+ * @param {Element} element
+ * @returns {string}
+ */
+export function getCssPath(element) {
+    if (!(element instanceof Element))
+        return;
+    var path = [];
+    while (element.nodeType === Node.ELEMENT_NODE) {
+        var selector = element.nodeName.toLowerCase();
+        if (element.id) {
+            selector += '#' + element.id;
+            path.unshift(selector);
+            break;
+        } else {
+            var sib = element, nth = 1;
+            while (sib = sib.previousElementSibling) {
+                if (sib.nodeName.toLowerCase() == selector)
+                    nth++;
+            }
+            if (nth != 1)
+                selector += ':nth-of-type(' + nth + ')';
+        }
+        path.unshift(selector);
+        element = element.parentNode;
+    }
+    return path.join(' > ');
+}
+

@@ -1,98 +1,131 @@
 /*global chrome*/
+import React from 'react'
+import ReactDOM from 'react-dom'
+
+import {
+    removeAllChildNodes,
+    selectorToLastElement,
+} from './utils'
+import {
+    EventInfo,
+} from './utils/classes'
 
 import './contentscript.css'
 
-function getCssPath(element) {
-    if (!(element instanceof Element))
-        return;
-    var path = [];
-    while (element.nodeType === Node.ELEMENT_NODE) {
-        var selector = element.nodeName.toLowerCase();
-        if (element.id) {
-            selector += '#' + element.id;
-            path.unshift(selector);
-            break;
-        } else {
-            var sib = element, nth = 1;
-            while (sib = sib.previousElementSibling) {
-                if (sib.nodeName.toLowerCase() == selector)
-                    nth++;
-            }
-            if (nth != 1)
-                selector += ':nth-of-type(' + nth + ')';
-        }
-        path.unshift(selector);
-        element = element.parentNode;
-    }
-    return path.join(' > ');
-}
-
+/**
+ * Create new EventInfo and return it.
+ * @param {Event} e
+ * @returns {EventInfo}
+ */
 function getEventInfo(e) {
-
-    var targetSelector = getCssPath(e.target)
-    var targetTag = e.target.tagName.toLowerCase()
-    var targetInnerText = e.target.innerText
-    var targetInnerHTML = e.target.innerHTML
-    var targetAttributes = e.target.attributes
-    var targetPosition = e.target.getBoundingClientRect()
-
-    var attributesFormatted = {}
-
-    for (var key in Object.keys(targetAttributes)) {
-        var attr = targetAttributes[key]
-        attributesFormatted[attr.name] = attr.value
-    }
-
-    return {
-        type: e.type,
-        target: {
-            selector: targetSelector,
-            tag: targetTag,
-            innerText: targetInnerText,
-            innerHTML: targetInnerHTML,
-            attributes: attributesFormatted,
-            position: targetPosition
-        }
-    }
+    return new EventInfo(e)
 }
 
+/**
+ * Send EventInfo to background.js on chrome extension
+ * @param {EventInfo} eventInfo 
+ */
 function sendEventToBackground(eventInfo) {
     //send message to ext
     chrome.extension.sendMessage(eventInfo, function (response) {
         //callback
-        console.log('response from background.js')
+        console.log('response from background.js:', response)
     })
 }
 
+/**
+ * Create new empty InfoBox and return it.
+ * @returns {Element}
+ */
 function createInfoBox() {
-    var infoBox = document.createElement('div')
-    var infoBoxId = document.createAttribute('id')
-    infoBoxId.value = 'guiScraperInfoBoxElement'
-    infoBox.setAttributeNode(infoBoxId)
+    // new InfoBox
+    const infoBox = document.createElement('div')
+    infoBox.setAttribute('id', 'guiScraperInfoBoxElement')
     return infoBox
 }
 
+/**
+ * Return existed InfoBox on Document or create empty InfoBox and return it.
+ * @returns {Element}
+ */
+function getOrCreateInfoBox() {
+    let infoBox = document.getElementById('guiScraperInfoBoxElement')
+    if (!infoBox) {
+        infoBox = createInfoBox()
+    }
+    return infoBox
+}
+
+/**
+ * Create new InfoBoxContent element and return it.
+ * InfoBoxContent element will be contained to InfoBox
+ * @param {EventInfo} eventInfo
+ * @returns {React.DOMElement} 
+ */
+function createInfoBoxContent(eventInfo) {
+
+    // target attribute object to array of name and value.
+    const targetAttributes = Object.keys(eventInfo.target.attributes).map(name => {
+        return { name, value: eventInfo.target.attributes[name] }
+    })
+
+    // to display target's innerText into InfoBox.
+    const minimalizedInnerText = eventInfo.target.innerText.length > 30
+        ? eventInfo.target.innerText.substring(0, 15) + '...'
+        : eventInfo.target.innerText
+
+    // return new InfoBox with new event info.
+    return (
+        <div id='guiScraperInfoBoxContent'>
+            <h3 className='gsib-content-title'>{selectorToLastElement(eventInfo.target.selector)}</h3>
+            <p className='gsib-content-subtitle'>{minimalizedInnerText}</p>
+            <ul className='gsib-content-attr-list'>
+                {targetAttributes.map(attribute => (
+                    <li><span>{attribute.name}:</span>{attribute.value}</li>
+                ))}
+            </ul>
+        </div>
+    )
+}
+
+/**
+ * Update infoBox's content into newInfoBoxContent
+ * @param {Element} infoBox 
+ * @param {React.DOMElement} newInfoBoxContent 
+ */
+function updateInfoBox(infoBox, newInfoBoxContent) {
+    removeAllChildNodes(infoBox)
+    ReactDOM.render(newInfoBoxContent, infoBox)
+}
+
+/**
+ * Create new PointingBox and return it.
+ * @returns {Element}
+ */
 function createPointingBox() {
-    var pointingBox = document.createElement('div')
-    var pointingBoxId = document.createAttribute('id')
-    pointingBoxId.value = 'guiScraperPointingElement'
-    pointingBox.setAttributeNode(pointingBoxId)
+    const pointingBox = document.createElement('div')
+    pointingBox.setAttribute('id', 'guiScraperPointingElement')
     return pointingBox
 }
 
-function attachPointingBox(pointingBox) {
-    document.body.appendChild(pointingBox)
-}
-
+/**
+ * Return existed PointingBox on Document or create and return it.
+ * @returns {Element}
+ */
 function getOrCreatePointingBox() {
-    var pointingBox = document.getElementById('guiScraperPointingElement')
+    let pointingBox = document.getElementById('guiScraperPointingElement')
     if (!pointingBox) {
         pointingBox = createPointingBox()
-        attachPointingBox(pointingBox)
+        document.body.appendChild(pointingBox)
     }
     return pointingBox
 }
 
+/**
+ * Set position of PointingBox
+ * @param {Element} pointingBox 
+ * @param {ClientRect} position 
+ */
 function setPointingBoxPosition(pointingBox, position) {
     console.log(position)
     pointingBox.style.top = position.top + 'px'
@@ -101,24 +134,39 @@ function setPointingBoxPosition(pointingBox, position) {
     pointingBox.style.height = position.height + 'px'
 }
 
-function renderPointingBox(info) {
-    var position = info.target.position
-    var pointingBox = getOrCreatePointingBox()
+/**
+ * Get or create pointingBox and update attribute from new eventInfo
+ * @param {EventInfo} eventInfo 
+ */
+function renderPointingBox(eventInfo) {
+    const position = eventInfo.target.position
+    const pointingBox = getOrCreatePointingBox()
     setPointingBoxPosition(pointingBox, position)
 }
 
+/**
+ * This event handler will send information about event
+ * to background.js on chrome extension
+ * @param {Event} e 
+ */
 function record(e) {
-    var info = getEventInfo(e)
-    sendEventToBackground(info)
+    const eventInfo = getEventInfo(e)
+    sendEventToBackground(eventInfo)
 }
 
+/**
+ * This event handler will rerender PointingBox
+ * with new information based on new event
+ * @param {Event} e 
+ */
 function point(e) {
-    var info = getEventInfo(e)
-    renderPointingBox(info)
+    const eventInfo = getEventInfo(e)
+    renderPointingBox(eventInfo)
 }
 
-var shouldBeRecordedEvents = ['click', 'keypress']
-var shouldBePointedEvents = ['mousemove']
+const shouldBeRecordedEvents = ['click', 'keypress']
+const shouldBePointedEvents = ['mousemove', 'scroll']
 
+// Set event handlers
 shouldBeRecordedEvents.forEach(e => document.addEventListener(e, record))
 shouldBePointedEvents.forEach(e => document.addEventListener(e, point))
