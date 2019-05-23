@@ -70,9 +70,11 @@ function createInfoBoxContent(eventInfo) {
     })
 
     // to display target's innerText into InfoBox.
-    const minimalizedInnerText = eventInfo.target.innerText.length > 30
-        ? eventInfo.target.innerText.substring(0, 15) + '...'
-        : eventInfo.target.innerText
+    const minimalizedInnerText = eventInfo.target.innerText ? (
+        eventInfo.target.innerText.length > 30
+            ? eventInfo.target.innerText.substring(0, 15) + '...'
+            : eventInfo.target.innerText
+    ) : ''
 
     // return new InfoBox with new event info.
     return (
@@ -96,6 +98,23 @@ function createInfoBoxContent(eventInfo) {
 function updateInfoBox(infoBox, newInfoBoxContent) {
     removeAllChildNodes(infoBox)
     ReactDOM.render(newInfoBoxContent, infoBox)
+}
+
+/**
+ * Get or create InfoBox and update attribute from new eventInfo
+ * @param {EventInfo} eventInfo 
+ */
+function renderInfoBox(eventInfo) {
+    const infoBox = getOrCreateInfoBox()
+    const infoBoxContent = createInfoBoxContent(eventInfo)
+    console.log(infoBox, infoBoxContent)
+    updateInfoBox(infoBox, infoBoxContent)
+
+    // attatch to PointingBox
+    const pointingBox = getOrCreatePointingBox()
+    if (!pointingBox.firstChild) {
+        pointingBox.appendChild(infoBox)
+    }
 }
 
 /**
@@ -162,10 +181,11 @@ function record(e) {
 function point(e) {
     const eventInfo = getEventInfo(e)
     renderPointingBox(eventInfo)
+    renderInfoBox(eventInfo)
 }
 
 const shouldBeRecordedEvents = ['click', 'keypress']
-const shouldBePointedEvents = ['mousemove', 'scroll']
+const shouldBePointedEvents = ['click', 'keypress', 'mousemove', 'scroll']
 
 // Set event handlers
 shouldBeRecordedEvents.forEach(e => document.addEventListener(e, record))
