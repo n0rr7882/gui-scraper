@@ -179,6 +179,19 @@ function setPointingBoxPosition(pointingBox, position) {
 }
 
 /**
+ * Set color of PointingBox
+ * @param {Element} pointingBox 
+ * @param {string} eventType 
+ */
+function setPointingBoxEventStatus(pointingBox, eventType) {
+    if (['click', 'keypress'].includes(eventType)) {
+        pointingBox.setAttribute('class', 'gs-pointingbox-act')
+    } else {
+        pointingBox.setAttribute('class', '')
+    }
+}
+
+/**
  * Get or create pointingBox and update attribute from new eventInfo
  * @param {EventInfo} eventInfo 
  */
@@ -186,6 +199,7 @@ function renderPointingBox(eventInfo) {
     const position = eventInfo.target.position
     const pointingBox = getOrCreatePointingBox()
     setPointingBoxPosition(pointingBox, position)
+    setPointingBoxEventStatus(pointingBox, eventInfo.type)
 }
 
 /**
