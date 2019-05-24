@@ -27,7 +27,7 @@ export class EventInfoTarget {
     constructor(element) {
 
         const attributesFormatted = {}
-        for (var key in Object.keys(element.attributes)) {
+        for (var key in Object.keys(element.attributes || [])) {
             var attr = element.attributes[key]
             attributesFormatted[attr.name] = attr.value
         }

@@ -1,7 +1,4 @@
 /*global chrome*/
-import React from 'react'
-import ReactDOM from 'react-dom'
-
 import {
     removeAllChildNodes,
     selectorToLastElement,
@@ -10,7 +7,7 @@ import {
     EventInfo,
 } from './utils/classes'
 
-import './contentscript.css'
+import './contentscript.scss'
 
 /**
  * Create new EventInfo and return it.
@@ -60,44 +57,74 @@ function getOrCreateInfoBox() {
  * Create new InfoBoxContent element and return it.
  * InfoBoxContent element will be contained to InfoBox
  * @param {EventInfo} eventInfo
- * @returns {React.DOMElement} 
+ * @returns {Element} 
  */
 function createInfoBoxContent(eventInfo) {
-
     // target attribute object to array of name and value.
-    const targetAttributes = Object.keys(eventInfo.target.attributes).map(name => {
+    const targetAttributes = Object.keys(eventInfo.target.attributes || []).map(name => {
         return { name, value: eventInfo.target.attributes[name] }
     })
 
     // to display target's innerText into InfoBox.
     const minimalizedInnerText = eventInfo.target.innerText ? (
-        eventInfo.target.innerText.length > 30
-            ? eventInfo.target.innerText.substring(0, 15) + '...'
+        eventInfo.target.innerText.length > 60
+            ? eventInfo.target.innerText.substring(0, 60) + '...'
             : eventInfo.target.innerText
     ) : ''
 
-    // return new InfoBox with new event info.
-    return (
-        <div id='guiScraperInfoBoxContent'>
-            <h3 className='gsib-content-title'>{selectorToLastElement(eventInfo.target.selector)}</h3>
-            <p className='gsib-content-subtitle'>{minimalizedInnerText}</p>
-            <ul className='gsib-content-attr-list'>
-                {targetAttributes.map(attribute => (
-                    <li><span>{attribute.name}:</span>{attribute.value}</li>
-                ))}
-            </ul>
-        </div>
-    )
+    // return new InfoBoxContent with new event info.
+    const infoBoxContent = document.createElement('div')
+    infoBoxContent.setAttribute('id', 'guiScraperInfoBoxContent')
+
+    // title
+    const infoBoxTitle = document.createElement('h3')
+    infoBoxTitle.setAttribute('class', 'gsib-content-title')
+    infoBoxTitle.innerText = selectorToLastElement(eventInfo.target.selector)
+
+    // subtitle
+    const infoBoxSubtitle = document.createElement('p')
+    infoBoxSubtitle.setAttribute('class', 'gsib-content-subtitle')
+    infoBoxSubtitle.innerText = minimalizedInnerText
+
+    // attribute list
+    const infoBoxAttrList = document.createElement('ul')
+    infoBoxAttrList.setAttribute('class', 'gisb-content-attr-list')
+
+    for (const attr of targetAttributes) {
+        // attribute item
+        const attrItem = document.createElement('li')
+
+        // attribute name
+        const attrName = document.createElement('b')
+        attrName.innerText = `${attr.name}: `
+
+        // attribute value
+        const attrValue = document.createElement('code')
+        attrValue.innerText = attr.value
+
+        attrItem.appendChild(attrName)
+        attrItem.appendChild(attrValue)
+        
+        // attach into infoBoxAttrList
+        infoBoxAttrList.appendChild(attrItem)
+    }
+
+    // assemble infoBoxContent
+    infoBoxContent.appendChild(infoBoxTitle)
+    infoBoxContent.appendChild(infoBoxSubtitle)
+    infoBoxContent.appendChild(infoBoxAttrList)
+
+    return infoBoxContent
 }
 
 /**
  * Update infoBox's content into newInfoBoxContent
  * @param {Element} infoBox 
- * @param {React.DOMElement} newInfoBoxContent 
+ * @param {Element} newInfoBoxContent 
  */
 function updateInfoBox(infoBox, newInfoBoxContent) {
     removeAllChildNodes(infoBox)
-    ReactDOM.render(newInfoBoxContent, infoBox)
+    infoBox.appendChild(newInfoBoxContent)
 }
 
 /**
@@ -107,7 +134,6 @@ function updateInfoBox(infoBox, newInfoBoxContent) {
 function renderInfoBox(eventInfo) {
     const infoBox = getOrCreateInfoBox()
     const infoBoxContent = createInfoBoxContent(eventInfo)
-    console.log(infoBox, infoBoxContent)
     updateInfoBox(infoBox, infoBoxContent)
 
     // attatch to PointingBox
@@ -146,7 +172,6 @@ function getOrCreatePointingBox() {
  * @param {ClientRect} position 
  */
 function setPointingBoxPosition(pointingBox, position) {
-    console.log(position)
     pointingBox.style.top = position.top + 'px'
     pointingBox.style.left = position.left + 'px'
     pointingBox.style.width = position.width + 'px'
