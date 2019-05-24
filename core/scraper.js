@@ -31,8 +31,30 @@ const scraper = class {
             return return_string;
         }
     }
+    static longest_same_prefix(array){
+        let A= array.concat().sort();
+        let a1= A[0], a2= A[A.length-1], L= a1.length, i= 0;
+        while(i<L && a1.charAt(i) === a2.charAt(i)) i++;
+        let lsp_substring = a1.substring(0, i);
+        let splited_lsp = lsp_substring.split('>');
+        let return_string = "";
+        try{
+            document.querySelector(lsp_substring);
+            return_string = lsp_substring;
+        }catch{
+            for(let i=0; i<splited_lsp.length - 1; i++){
+                if (i === 0){
+                    return_string += splited_lsp[i];
+                }else{
+                    return_string += ' > ' + splited_lsp[i];
+                }
+            }
+        }
+        return return_string;
+
+    }
     async find_one_element(css_selector, base = this[WEB_DRIVER]){
-        let wait_element = await this.waitCss(10, css_selector);
+        let wait_element = await this.waitCss(10000, css_selector);
         if(wait_element){
             return base.findElement(By.css(css_selector))
         }
@@ -42,8 +64,12 @@ const scraper = class {
         let element = await this.find_one_element(css_selector);
         return await element.getText()
     }
-    find_many_elements(css_selector, base = this[WEB_DRIVER]){
-        return base.findElements(By.css(css_selector))
+    async find_many_elements(css_selector, base = this[WEB_DRIVER]){
+        let wait_element = await this.waitCss(10000, css_selector);
+        if(wait_element){
+            return base.findElements(By.css(css_selector));
+        }
+        return null
     }
     async waitCss(time, css, base = this[WEB_DRIVER]){
         return base.wait(until.elementLocated(By.css(css)), time);
