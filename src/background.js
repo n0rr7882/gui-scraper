@@ -26,18 +26,43 @@ function createFailedMsgCtx(context={}) {
     return new MessageContext('res_failed', context)
 }
 
+/**
+ * 
+ * @param {number} tabId
+ * @returns {EventStorage}
+ */
 function createEmptyStorage(tabId) {
-    storages[tabId] = new EventStorage([], null, true)
+    const storage = new EventStorage()
+    setStorageTabId(storage, tabId)
+    storages.push(storage)
+    return storage
+}
+
+/**
+ * 
+ * @param {number} tabId
+ * @returns {EventStorage}
+ */
+function findStorage(tabId) {
+    return storages.find(s => s.tabId === tabId)
+}
+
+/**
+ * 
+ * @param {number} tabId 
+ */
+function removeStorage(tabId) {
+    const i = storages.findIndex(s => s.tabId === tabId)
+    if (i >= 0) {
+        storages.splice(i, 1)
+    }
 }
 
 /**
  * @returns {EventStorage}
  */
 function getOrCreateStorage(tabId) {
-    if (!storages[tabId]) {
-        createEmptyStorage(tabId)
-    }
-    return storages[tabId]
+    return findStorage(tabId) || createEmptyStorage(tabId)
 }
 
 /**
@@ -46,8 +71,19 @@ function getOrCreateStorage(tabId) {
  * @param {string} url 
  */
 function setStorageEntryURL(storage, url) {
-    if (storage.events.length == 0) {
+    if (storage.events.length === 0) {
         storage.entryURL = url
+    }
+}
+
+/**
+ * 
+ * @param {EventStorage} storage 
+ * @param {number} tabId 
+ */
+function setStorageTabId(storage, tabId) {
+    if (storage.events.length === 0) {
+        storage.tabId = tabId
     }
 }
 
@@ -98,14 +134,26 @@ function recctrlHandler (message, sender, sendResponse) {
  * @param {object} sender 
  * @param {function} sendResponse
  */
-function rmstorageHandler (message, sender, sendResponse) {
-    if (storages[message.tabId]) {
-        storages[message.tabId] = undefined
-        sendResponse(createSuccessMsgCtx())
-    } else {
-        sendResponse(createFailedMsgCtx({
-            message: `EventStorage(tabId: ${message.tabId}) does not exists.`
-        }))
+function storageHandler (message, sender, sendResponse) {
+    switch (message.action) {
+        case 'all':
+            sendResponse(createSuccessMsgCtx({
+                storages
+            }))
+            break
+        case 'get':
+            sendResponse(createSuccessMsgCtx({
+                storage: findStorage(message.tabId)
+            }))
+            break
+        case 'delete':
+            removeStorage(message.tabId)
+            sendResponse(createSuccessMsgCtx())
+            break
+        default:
+            sendResponse(createFailedMsgCtx({
+                message: `${message.action} is unsupported action types.`
+            }))
     }
 }
 
@@ -113,7 +161,7 @@ const HANDLER_LIST = {
     'recevent': receventHandler,
     'reccheck': reccheckHandler,
     'recctrl': recctrlHandler,
-    'rmstorage': rmstorageHandler,
+    'storage': storageHandler,
 }
 
 /**

@@ -150,7 +150,6 @@ module.exports = function (webpackEnv) {
     // This means they will be the "root" imports that are included in JS bundle.
     entry: {
       index: [require.resolve('./polyfills'), paths.appIndexJs],
-      newtab: [require.resolve('./polyfills'), paths.newtabJs],
       popup: [require.resolve('./polyfills'), paths.popupJs],
       background: [require.resolve('./polyfills'), paths.backgroundJs],
       contentscript: [require.resolve('./polyfills'), paths.contentscriptJs]
@@ -471,7 +470,6 @@ module.exports = function (webpackEnv) {
     plugins: [
       // Generates an `index.html` file with the <script> injected.
       htmlPlugin({ template: paths.appHtml, chunks: ['index'], filename: 'index.html' }),
-      htmlPlugin({ template: paths.newtabHtml, chunks: ['newtab'], filename: 'newtab.html' }),
       htmlPlugin({ template: paths.popupHtml, chunks: ['popup'], filename: 'popup.html' }),
       htmlPlugin({ template: paths.backgroundHtml, chunks: ['background'], filename: 'background.html' }),
       // Makes some environment variables available in index.html.

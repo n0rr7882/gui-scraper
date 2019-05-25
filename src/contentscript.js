@@ -1,4 +1,3 @@
-/*global chrome*/
 import {
     removeAllChildNodes,
     selectorToLastElement,
@@ -7,6 +6,10 @@ import {
     EventInfo,
     MessageContext,
 } from './utils/classes'
+import {
+    errorLogger,
+    sendToBackground,
+} from './utils/send-to-background'
 
 import './contentscript.scss'
 
@@ -50,12 +53,10 @@ function getEventInfo(e) {
  * @param {EventInfo} eventInfo 
  */
 function sendEventToBackground(eventInfo) {
-    //send message to ext
     const newMsgCtx = createRecEventMsgCtx(eventInfo)
-    chrome.extension.sendMessage(newMsgCtx, response => {
-        //callback
-        console.log('response from background.js:', response)
-    })
+    sendToBackground(newMsgCtx).then(resMsgCtx => {
+        console.log('Response from background.js:', resMsgCtx)
+    }).catch(errorLogger)
 }
 
 /**
@@ -245,11 +246,18 @@ let RECORDING = false
 
 setInterval(() => {
     const newMsgCtx = createCheckRecMsgCtx()
-    chrome.extension.sendMessage(newMsgCtx, response => {
-        const msgCtx = MessageContext.convert(response)
-        RECORDING = msgCtx.context.recording
-    })
+    sendToBackground(newMsgCtx).then(resMsgCtx => {
+        RECORDING = resMsgCtx.context.recording
+    }).catch(errorLogger)
 }, 100)
+
+/**
+ * 
+ * @param {boolean} enable 
+ */
+function setContextMenu(enable) {
+    document.body.setAttribute('oncontextmenu', `return ${enable}`)
+}
 
 /**
  * This event handler will send information about event
@@ -257,10 +265,8 @@ setInterval(() => {
  * @param {Event} e 
  */
 function record(e) {
-    console.log(e)
     if (RECORDING) {
         const eventInfo = getEventInfo(e)
-        console.log(eventInfo)
         sendEventToBackground(eventInfo)
     }
 }
@@ -275,8 +281,10 @@ function point(e) {
         const eventInfo = getEventInfo(e)
         renderPointingBox(eventInfo)
         renderInfoBox(eventInfo)
+        setContextMenu(false)
     } else {
         removePointingBox()
+        setContextMenu(true)
     }
 }
 

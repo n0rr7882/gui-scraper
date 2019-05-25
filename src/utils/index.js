@@ -1,4 +1,3 @@
-import { TYPE_SETTINGS } from '../constants'
 import { isString } from 'util';
 
 /**
@@ -22,19 +21,6 @@ export function selectorToArray(selectorString) {
 export function selectorToLastElement(selectorString) {
     const elements = selectorToArray(selectorString)
     return elements[elements.length - 1]
-}
-
-/**
- * 
- * @param {string} actionType
- * @returns {object} color setting set
- */
-export function actionTypeToTypeSetting(actionType) {
-    if (isString(actionType) && TYPE_SETTINGS[actionType]) {
-        return TYPE_SETTINGS[actionType]
-    } else {
-        return null
-    }
 }
 
 /**
@@ -77,3 +63,19 @@ export function getCssPath(element) {
     return path.join(' > ');
 }
 
+/**
+ * Remove last nth-of-type(n) attribute
+ * @param {string} selectorString
+ * @returns {string}
+ */
+export function removeLastNthOfType(selectorString) {
+    const elements = selectorString.split(' > ')
+    for (const i = elements.length - 1; i >= 0; i--) {
+        const replaced = elements[i].replace(/:nth\-of\-type\(\d+\)/g, '')
+        if (elements[i].length !== replaced.length) {
+            elements[i] = replaced
+            break
+        }
+    }
+    return elements.join(' > ')
+}

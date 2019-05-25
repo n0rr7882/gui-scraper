@@ -11,7 +11,7 @@ import {
 export function convertStorage(storage) {
     return {
         entry_point: storage.entryURL,
-        processes: convertEventList(storage.events)
+        process: convertEventList(storage.events)
     }
 }
 

@@ -85,10 +85,8 @@ module.exports = {
   servedPath: getServedPath(resolveApp('package.json')),
 
   // for chrome extensions
-  newtabHtml: resolveApp('public/newtab.html'),
   popupHtml: resolveApp('public/popup.html'),
   backgroundHtml: resolveApp('public/background.html'),
-  newtabJs: resolveApp('src/newtab.js'),
   popupJs: resolveApp('src/popup.js'),
   backgroundJs: resolveApp('src/background.js'),
   contentscriptJs: resolveApp('src/contentscript.js'),
