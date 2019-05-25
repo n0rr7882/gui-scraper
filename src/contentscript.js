@@ -5,9 +5,36 @@ import {
 } from './utils'
 import {
     EventInfo,
+    MessageContext,
 } from './utils/classes'
 
 import './contentscript.scss'
+
+const SHOULD_BE_RECORDED_EVENTS = [
+    'click',
+    'contextmenu',
+    // 'keypress',
+]
+const SHOULD_BE_POINTED_EVENTS = [
+    ...SHOULD_BE_RECORDED_EVENTS,
+    'mousemove',
+    'wheel'
+]
+
+/**
+ * Create MessageContext to send chrome extension background.js
+ */
+function createCheckRecMsgCtx () {
+    return new MessageContext('reccheck', {})
+}
+
+/**
+ * Create MessageContext to send chrome extension background.js
+ * @param {EventInfo} eventInfo 
+ */
+function createRecEventMsgCtx (eventInfo) {
+    return new MessageContext('recevent', eventInfo)
+}
 
 /**
  * Create new EventInfo and return it.
@@ -24,7 +51,8 @@ function getEventInfo(e) {
  */
 function sendEventToBackground(eventInfo) {
     //send message to ext
-    chrome.extension.sendMessage(eventInfo, function (response) {
+    const newMsgCtx = createRecEventMsgCtx(eventInfo)
+    chrome.extension.sendMessage(newMsgCtx, response => {
         //callback
         console.log('response from background.js:', response)
     })
@@ -184,10 +212,10 @@ function setPointingBoxPosition(pointingBox, position) {
  * @param {string} eventType 
  */
 function setPointingBoxEventStatus(pointingBox, eventType) {
-    if (['click', 'keypress'].includes(eventType)) {
-        pointingBox.setAttribute('class', 'gs-pointingbox-act')
+    if (SHOULD_BE_RECORDED_EVENTS.includes(eventType)) {
+        pointingBox.setAttribute('class', eventType)
     } else {
-        pointingBox.setAttribute('class', '')
+        pointingBox.removeAttribute('class')
     }
 }
 
@@ -203,13 +231,38 @@ function renderPointingBox(eventInfo) {
 }
 
 /**
+ * Remove PointingBox from DOM
+ */
+function removePointingBox() {
+    const pointingBox = document.getElementById('guiScraperPointingElement')
+    if (pointingBox) {
+        pointingBox.remove()
+    }
+}
+
+// When scaper starts recording, this var will be set true
+let RECORDING = false
+
+setInterval(() => {
+    const newMsgCtx = createCheckRecMsgCtx()
+    chrome.extension.sendMessage(newMsgCtx, response => {
+        const msgCtx = MessageContext.convert(response)
+        RECORDING = msgCtx.context.recording
+    })
+}, 100)
+
+/**
  * This event handler will send information about event
  * to background.js on chrome extension
  * @param {Event} e 
  */
 function record(e) {
-    const eventInfo = getEventInfo(e)
-    sendEventToBackground(eventInfo)
+    console.log(e)
+    if (RECORDING) {
+        const eventInfo = getEventInfo(e)
+        console.log(eventInfo)
+        sendEventToBackground(eventInfo)
+    }
 }
 
 /**
@@ -218,14 +271,15 @@ function record(e) {
  * @param {Event} e 
  */
 function point(e) {
-    const eventInfo = getEventInfo(e)
-    renderPointingBox(eventInfo)
-    renderInfoBox(eventInfo)
+    if (RECORDING) {
+        const eventInfo = getEventInfo(e)
+        renderPointingBox(eventInfo)
+        renderInfoBox(eventInfo)
+    } else {
+        removePointingBox()
+    }
 }
 
-const shouldBeRecordedEvents = ['click', 'keypress']
-const shouldBePointedEvents = ['click', 'keypress', 'mousemove', 'scroll']
-
 // Set event handlers
-shouldBeRecordedEvents.forEach(e => document.addEventListener(e, record))
-shouldBePointedEvents.forEach(e => document.addEventListener(e, point))
+SHOULD_BE_RECORDED_EVENTS.forEach(e => document.addEventListener(e, record))
+SHOULD_BE_POINTED_EVENTS.forEach(e => document.addEventListener(e, point))

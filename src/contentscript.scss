@@ -18,10 +18,11 @@
     -moz-border-radius: 3px;
     -webkit-border-radius: 3px;
     width: fit-content;
+    text-align: left;
   }
 
   p {
-    margin: 1em 0;
+    margin: 0.5em 0;
   }
 
   a {
@@ -621,7 +622,12 @@
   }
 }
 
-#guiScraperPointingElement.gs-pointingbox-act {
-  border: 2px solid rgb(65, 13, 13);
+#guiScraperPointingElement.click {
+  border: 2px solid rgb(180, 10, 10);
   background-color: rgba(148, 24, 24, 0.15);
+}
+
+#guiScraperPointingElement.contextmenu {
+  border: 2px solid rgb(10, 50, 180);
+  background-color: rgba(24, 67, 148, 0.15);
 }

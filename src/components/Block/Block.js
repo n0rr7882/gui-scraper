@@ -1,3 +1,4 @@
+/*global chrome*/
 import React from 'react'
 import PropTypes from 'prop-types'
 import {
@@ -28,7 +29,11 @@ function Block({ action }) {
 
   return (
     <div className='a-block'>
-      <Card body bg={setting.color} text={setting.text}>
+      <Card body bg={setting.color} text={setting.text} onClick={e => {
+        chrome.extension.sendMessage({msgtype:'recctrl', context: false}, response => {
+          console.log(response)
+        })
+      }}>
         <Card.Title>{setting.verboseName}</Card.Title>
         <input className="form-control" value={renderCardText(action, setting)} disabled/>
       </Card>
