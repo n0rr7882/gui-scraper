@@ -4,6 +4,7 @@ import {
 } from './core/msg-ctx'
 import {
     removeAllChildNodes,
+    removeLastNthOfType,
     selectorToLastElement,
 } from './utils'
 import {
@@ -16,11 +17,17 @@ import {
 
 import './contentscript.scss'
 
-const SHOULD_BE_RECORDED_EVENTS = [
-    'click',
-    'contextmenu',
-    // 'keypress',
-]
+// To handle each event differently
+const SHOULD_BE_RECORDED_EVENT_HANDLERS = {
+    'click': handleClick,
+    'dblclick': handleDblclick,
+    'contextmenu': handleContextmenu,
+}
+
+// Events to record
+const SHOULD_BE_RECORDED_EVENTS = Object.keys(SHOULD_BE_RECORDED_EVENT_HANDLERS)
+
+// Events that should indicate element position
 const SHOULD_BE_POINTED_EVENTS = [
     ...SHOULD_BE_RECORDED_EVENTS,
     'mousemove',
@@ -29,6 +36,9 @@ const SHOULD_BE_POINTED_EVENTS = [
 
 // When scaper starts recording, this var will be set true
 let RECORDING = false
+
+// To distinguish between click and double click
+let IS_DOUBLE_CLICK = false
 
 /**
  * Create new EventInfo and return it.
@@ -165,22 +175,25 @@ function renderInfoBox(eventInfo) {
 
 /**
  * Create new PointingBox and return it.
+ * @param {string|number} identifier
  * @returns {Element}
  */
-function createPointingBox() {
+function createPointingBox(identifier='default') {
     const pointingBox = document.createElement('div')
-    pointingBox.setAttribute('id', 'guiScraperPointingElement')
+    pointingBox.id = `guiScraperPointingElement_${identifier}`
+    pointingBox.classList.add('guiScraperPointingElement')
     return pointingBox
 }
 
 /**
- * Return existed PointingBox on Document or create and return it.
+ * Return existed PointingBox on DOM or create and return it.
+ * @param {string|number} identifier
  * @returns {Element}
  */
-function getOrCreatePointingBox() {
-    let pointingBox = document.getElementById('guiScraperPointingElement')
+function getOrCreatePointingBox(identifier='default') {
+    let pointingBox = document.getElementById(`guiScraperPointingElement_${identifier}`)
     if (!pointingBox) {
-        pointingBox = createPointingBox()
+        pointingBox = createPointingBox(identifier)
         document.body.appendChild(pointingBox)
     }
     return pointingBox
@@ -199,15 +212,15 @@ function setPointingBoxPosition(pointingBox, position) {
 }
 
 /**
- * Set color of PointingBox
+ * Set class attributes of PointingBox
  * @param {Element} pointingBox 
  * @param {string} eventType 
  */
 function setPointingBoxEventStatus(pointingBox, eventType) {
     if (SHOULD_BE_RECORDED_EVENTS.includes(eventType)) {
-        pointingBox.setAttribute('class', eventType)
-    } else {
-        pointingBox.removeAttribute('class')
+        pointingBox.classList.add(eventType)
+    } else if (pointingBox.classList.length !== 1) {
+        pointingBox.setAttribute('class', 'guiScraperPointingElement')
     }
 }
 
@@ -215,18 +228,41 @@ function setPointingBoxEventStatus(pointingBox, eventType) {
  * Get or create pointingBox and update attribute from new eventInfo
  * @param {EventInfo} eventInfo 
  */
-function renderPointingBox(eventInfo) {
+function renderPointingBox(eventInfo, identifier='default') {
     const position = eventInfo.target.position
-    const pointingBox = getOrCreatePointingBox()
+    const pointingBox = getOrCreatePointingBox(identifier)
     setPointingBoxPosition(pointingBox, position)
     setPointingBoxEventStatus(pointingBox, eventInfo.type)
 }
 
 /**
- * Remove PointingBox from DOM
+ * 
+ * @param {EventInfo} eventInfo 
  */
-function removePointingBox() {
-    const pointingBox = document.getElementById('guiScraperPointingElement')
+function createParentEventInfo(eventInfo) {
+    const parentSelector = removeLastNthOfType(eventInfo.target.selector, true)
+    const parentElement = document.querySelector(parentSelector)
+    const event = new Event('parent_element')
+    // set manually created event's target to parent element
+    Object.defineProperty(event, 'target', { writable: false, value: parentElement })
+    return new EventInfo(event)
+}
+
+/**
+ * Get or 
+ * @param {EventInfo} eventInfo 
+ */
+function renderParentPointingBox(eventInfo) {
+    const parentEventInfo = createParentEventInfo(eventInfo)
+    renderPointingBox(parentEventInfo, 'parent_element')
+}
+
+/**
+ * Remove PointingBox from DOM
+ * @param {string|number} identifier
+ */
+function removePointingBox(identifier='default') {
+    const pointingBox = document.getElementById(`guiScraperPointingElement_${identifier}`)
     if (pointingBox) {
         pointingBox.remove()
     }
@@ -237,7 +273,40 @@ function removePointingBox() {
  * @param {boolean} enable 
  */
 function setContextMenu(enable) {
-    document.body.setAttribute('oncontextmenu', `return ${enable}`)
+    document.body.setAttribute('oncontextmenu', `return ${enable ? 'true' : 'false'}`)
+}
+
+/**
+ * 
+ * @param {EventInfo} eventInfo 
+ */
+function handleClick(eventInfo) {
+    // To distinguish between click and double click
+    IS_DOUBLE_CLICK = false
+    setTimeout(() => {
+        if (!IS_DOUBLE_CLICK) {
+            console.log('click')
+            sendEventToBackground(eventInfo)
+        }
+    }, 250)
+}
+
+/**
+ * 
+ * @param {EventInfo} eventInfo 
+ */
+function handleDblclick(eventInfo) {
+    // To distinguish between click and double click
+    IS_DOUBLE_CLICK = true
+    sendEventToBackground(eventInfo)
+}
+
+/**
+ * 
+ * @param {EventInfo} eventInfo 
+ */
+function handleContextmenu(eventInfo) {
+    sendEventToBackground(eventInfo)
 }
 
 /**
@@ -248,7 +317,7 @@ function setContextMenu(enable) {
 function record(e) {
     if (RECORDING) {
         const eventInfo = getEventInfo(e)
-        sendEventToBackground(eventInfo)
+        SHOULD_BE_RECORDED_EVENT_HANDLERS[e.type](eventInfo)
     }
 }
 
@@ -260,10 +329,14 @@ function record(e) {
 function point(e) {
     if (RECORDING) {
         const eventInfo = getEventInfo(e)
+        // render pointing box point to element and its parent
         renderPointingBox(eventInfo)
+        renderParentPointingBox(eventInfo)
+        // render info box that show pointed element's informations
         renderInfoBox(eventInfo)
     } else {
         removePointingBox()
+        removePointingBox('parent_element')
     }
     // Disable Context menu when on recording
     setContextMenu(!RECORDING)

@@ -1,4 +1,5 @@
 import {
+    // eslint-disable-next-line
     EventInfo,
     MessageContext,
 } from '../classes'

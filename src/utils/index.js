@@ -50,11 +50,12 @@ export function getCssPath(element) {
             break;
         } else {
             var sib = element, nth = 1;
+            // eslint-disable-next-line no-cond-assign
             while (sib = sib.previousElementSibling) {
-                if (sib.nodeName.toLowerCase() == selector)
+                if (sib.nodeName.toLowerCase() === selector)
                     nth++;
             }
-            if (nth != 1)
+            if (nth !== 1)
                 selector += ':nth-of-type(' + nth + ')';
         }
         path.unshift(selector);
@@ -68,12 +69,16 @@ export function getCssPath(element) {
  * @param {string} selectorString
  * @returns {string}
  */
-export function removeLastNthOfType(selectorString) {
-    const elements = selectorString.split(' > ')
-    for (const i = elements.length - 1; i >= 0; i--) {
-        const replaced = elements[i].replace(/:nth\-of\-type\(\d+\)/g, '')
+export function removeLastNthOfType(selectorString, removeChilds=false) {
+    let elements = selectorString.split(' > ')
+    for (let i = elements.length - 1; i >= 0; i--) {
+        const replaced = elements[i].replace(/:nth-of-type\(\d+\)/g, '')
         if (elements[i].length !== replaced.length) {
-            elements[i] = replaced
+            if (removeChilds) {
+                elements = elements.slice(0, i)
+            } else {
+                elements[i] = replaced
+            }
             break
         }
     }

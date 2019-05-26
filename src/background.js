@@ -1,6 +1,8 @@
 /*global chrome*/
 import {
+    // eslint-disable-next-line
     EventInfo,
+    // eslint-disable-next-line
     MessageContext,
 } from './classes'
 import {

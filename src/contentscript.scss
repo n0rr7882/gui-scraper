@@ -1,4 +1,4 @@
-#guiScraperPointingElement {
+.guiScraperPointingElement {
   position: fixed;
   border: 2px solid slategray;
   border-radius: 3px;
@@ -622,12 +622,24 @@
   }
 }
 
-#guiScraperPointingElement.click {
+.guiScraperPointingElement.click {
   border: 2px solid rgb(180, 10, 10);
   background-color: rgba(148, 24, 24, 0.15);
 }
 
-#guiScraperPointingElement.contextmenu {
+.guiScraperPointingElement.dblclick {
+  border: 2px solid rgb(166, 10, 180);
+  background-color: rgba(138, 24, 148, 0.15);
+}
+
+.guiScraperPointingElement.contextmenu {
   border: 2px solid rgb(10, 50, 180);
   background-color: rgba(24, 67, 148, 0.15);
+}
+
+// special case to render pointing box with custom identifier
+#guiScraperPointingElement_parent_element {
+  z-index: 999999998;
+  border: 2px solid rgba(45, 79, 107, 0.3);
+  background-color: rgba(187, 220, 255, 0.15);
 }

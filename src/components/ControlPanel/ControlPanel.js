@@ -15,6 +15,10 @@ import {
     selectorToLastElement,
 } from '../../utils'
 import {
+    EVENT_CONSTANTS
+} from '../../utils/constants'
+import {
+    // eslint-disable-next-line
     EventInfo,
 } from '../../classes/EventInfo'
 import {
@@ -172,24 +176,10 @@ export class ControlPanel extends Component {
      * @param {EventInfo} event 
      */
     renderEventItem(event) {
-        let variant = null
-        let type = null
-        switch (event.type) {
-            case 'click':
-                variant = null
-                type = 'Click'
-                break
-            case 'contextmenu':
-                variant = 'success'
-                type = 'Read'
-                break
-            default:
-                variant = 'light'
-                type = 'Undefined'
-        }
+        const constants = EVENT_CONSTANTS[event.type]
         return (
-            <ListGroup.Item variant={variant}>
-                <b>{type}: </b>
+            <ListGroup.Item variant={constants.variant}>
+                <b>{constants.text}: </b>
                 <code>{selectorToLastElement(event.target.selector)}</code>
             </ListGroup.Item>
         )

@@ -1,8 +1,18 @@
 import {
+    // eslint-disable-next-line
     EventInfo,
 } from '../classes/EventInfo'
-import { EventInfoTarget } from "../classes/EventInfoTarget";
-import { EventStorage } from "../classes/EventStorage";
+import {
+    // eslint-disable-next-line
+    EventInfoTarget,
+} from "../classes/EventInfoTarget";
+import {
+    // eslint-disable-next-line
+    EventStorage,
+} from "../classes/EventStorage";
+import {
+    removeLastNthOfType
+} from '../utils'
 
 /**
  * 
@@ -34,18 +44,19 @@ export function convertEventItem(eventInfo) {
 }
 
 const CONVERTER_LIST = {
-    'click': convertClickEvent,
-    'contextmenu': convertReadEvent
+    'click': convertClick,
+    'dblclick': convertParentList,
+    'contextmenu': convertRead,
 }
 
 /**
  * 
  * @param {EventInfoTarget} target 
  */
-export function convertClickEvent(target) {
+export function convertClick(target) {
     return {
         type: 'click',
-        css_selector: target.selector
+        css_selector: target.selector,
     }
 }
 
@@ -53,10 +64,27 @@ export function convertClickEvent(target) {
  * 
  * @param {EventInfoTarget} target 
  */
-export function convertReadEvent(target) {
+export function convertParentList(target) {
+    return {
+        type: 'parent_list',
+        css_selector: removeLastNthOfType(target.selector, true),
+        childs: [
+            {
+                css_selector: removeLastNthOfType(target.selector),
+                inner_attribute: target.attributes.href ? 'href' : 'text',
+            }
+        ]
+    }
+}
+
+/**
+ * 
+ * @param {EventInfoTarget} target 
+ */
+export function convertRead(target) {
     return {
         type: 'read',
         css_selector: target.selector,
-        inner_attribute: target.attributes.href ? 'href' : 'text'
+        inner_attribute: target.attributes.href ? 'href' : 'text',
     }
 }
