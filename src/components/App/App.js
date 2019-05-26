@@ -14,8 +14,8 @@ export class App extends Component {
     render() {
         return (
             <div className='a-app'>
-                <div className='h-100 a-app-container'>
-                    <Container className='h-100' fluid={true}>
+                <div className='a-app-container'>
+                    <Container fluid={true}>
                         <InfoTabs storages={this.state.storages} />
                     </Container>
                 </div>

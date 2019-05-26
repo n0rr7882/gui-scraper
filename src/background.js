@@ -146,7 +146,7 @@ function storageHandler (message, sender, sendResponse) {
                 storage: findStorage(message.tabId)
             }))
             break
-        case 'delete':
+        case 'remove':
             removeStorage(message.tabId)
             sendResponse(createSuccessMsgCtx())
             break
