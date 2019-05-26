@@ -16,12 +16,17 @@ import {
 } from '../../utils'
 import {
     EventInfo,
-    EventStorage,
-    MessageContext,
-} from '../../utils/classes'
+} from '../../classes/EventInfo'
+import {
+    EventStorage
+} from "../../classes"
 import {
     convertStorage
-} from '../../utils/event-formatter'
+} from '../../core/converter'
+import {
+    createRecCtrlMsgCtx,
+    createStorageMsgCtx,
+} from '../../core/msg-ctx'
 import {
     sendToBackground,
     errorLogger,
@@ -54,19 +59,15 @@ export class ControlPanel extends Component {
 
     handleRecording(value, _) {
         const tabId = this.props.storage.tabId
-        const msgCtx = new MessageContext('recctrl', {
-            tabId,
-            recording: value
-        })
+        // create MessageContext to control recording status
+        const msgCtx = createRecCtrlMsgCtx(tabId, value)
         sendToBackground(msgCtx).catch(errorLogger)
     }
 
     handleRmStorage(_) {
         const tabId = this.props.storage.tabId
-        const msgCtx = new MessageContext('storage', {
-            action: 'remove',
-            tabId
-        })
+        // create MessageContext to control storage status
+        const msgCtx = createStorageMsgCtx('remove', { tabId })
         sendToBackground(msgCtx).catch(errorLogger)
     }
 

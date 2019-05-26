@@ -9,7 +9,6 @@ html, body, #root {
   box-sizing: border-box;
 
   width: 480px;
-  height: 320px;
 }
 
 code {

@@ -1,91 +1,20 @@
 /*global chrome*/
 import {
     EventInfo,
-    EventStorage,
     MessageContext,
-} from './utils/classes'
+} from './classes'
 import {
     convertStorage
-} from './utils/event-formatter'
+} from './core/converter'
+import {
+    createSuccessMsgCtx,
+    createFailedMsgCtx,
+} from './core/msg-ctx'
+import StoragesController from './core/storage'
 
-const storages = []
 
-/**
- * 
- * @param {object} context 
- */
-function createSuccessMsgCtx(context={}) {
-    return new MessageContext('res_success', context)
-}
-
-/**
- * 
- * @param {object} context 
- */
-function createFailedMsgCtx(context={}) {
-    return new MessageContext('res_failed', context)
-}
-
-/**
- * 
- * @param {number} tabId
- * @returns {EventStorage}
- */
-function createEmptyStorage(tabId) {
-    const storage = new EventStorage()
-    setStorageTabId(storage, tabId)
-    storages.push(storage)
-    return storage
-}
-
-/**
- * 
- * @param {number} tabId
- * @returns {EventStorage}
- */
-function findStorage(tabId) {
-    return storages.find(s => s.tabId === tabId)
-}
-
-/**
- * 
- * @param {number} tabId 
- */
-function removeStorage(tabId) {
-    const i = storages.findIndex(s => s.tabId === tabId)
-    if (i >= 0) {
-        storages.splice(i, 1)
-    }
-}
-
-/**
- * @returns {EventStorage}
- */
-function getOrCreateStorage(tabId) {
-    return findStorage(tabId) || createEmptyStorage(tabId)
-}
-
-/**
- * 
- * @param {EventStorage} storage 
- * @param {string} url 
- */
-function setStorageEntryURL(storage, url) {
-    if (storage.events.length === 0) {
-        storage.entryURL = url
-    }
-}
-
-/**
- * 
- * @param {EventStorage} storage 
- * @param {number} tabId 
- */
-function setStorageTabId(storage, tabId) {
-    if (storage.events.length === 0) {
-        storage.tabId = tabId
-    }
-}
+const STORAGES = []
+const storCtrler = new StoragesController(STORAGES)
 
 /**
  * Receive event from contentscript and append event
@@ -94,9 +23,9 @@ function setStorageTabId(storage, tabId) {
  * @param {function} sendResponse
  */
 function receventHandler (eventInfo, sender, sendResponse) {
-    const storage = getOrCreateStorage(sender.tab.id)
+    const storage = storCtrler.getOrCreateStorage(sender.tab.id)
     if (storage.recording) {
-        setStorageEntryURL(storage, sender.url)
+        StoragesController.setStorageEntryURL(storage, sender.url)
         storage.events.push(eventInfo)
         sendResponse(createSuccessMsgCtx())
     } else {
@@ -111,7 +40,7 @@ function receventHandler (eventInfo, sender, sendResponse) {
  * @param {function} sendResponse 
  */
 function reccheckHandler (_, sender, sendResponse) {
-    const storage = getOrCreateStorage(sender.tab.id)
+    const storage = storCtrler.getOrCreateStorage(sender.tab.id)
     const ctx = { recording: storage.recording }
     sendResponse(createSuccessMsgCtx(ctx))
 }
@@ -123,13 +52,13 @@ function reccheckHandler (_, sender, sendResponse) {
  * @param {function} sendResponse
  */
 function recctrlHandler (message, sender, sendResponse) {
-    const storage = getOrCreateStorage(message.tabId)
+    const storage = storCtrler.getOrCreateStorage(message.tabId)
     storage.recording = message.recording
     sendResponse(createSuccessMsgCtx())
 }
 
 /**
- * Remove a event storage
+ * Retrieve and remove storages
  * @param {object} message 
  * @param {object} sender 
  * @param {function} sendResponse
@@ -138,16 +67,16 @@ function storageHandler (message, sender, sendResponse) {
     switch (message.action) {
         case 'all':
             sendResponse(createSuccessMsgCtx({
-                storages
+                storages: STORAGES
             }))
             break
         case 'get':
             sendResponse(createSuccessMsgCtx({
-                storage: findStorage(message.tabId)
+                storage: storCtrler.findStorage(message.tabId)
             }))
             break
         case 'remove':
-            removeStorage(message.tabId)
+            storCtrler.removeStorage(message.tabId)
             sendResponse(createSuccessMsgCtx())
             break
         default:
@@ -181,7 +110,7 @@ function rootHandler (message, sender, sendResponse) {
     }
 }
 
-setInterval(() => console.log(storages ), 1000)
-setInterval(() => storages.forEach(s => console.log(convertStorage(s))), 1000)
+setInterval(() => console.log(STORAGES), 1000)
+setInterval(() => STORAGES.forEach(s => console.log(convertStorage(s))), 1000)
 
 chrome.extension.onMessage.addListener(rootHandler)

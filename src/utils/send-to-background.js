@@ -1,5 +1,5 @@
 /*global chrome*/
-import { MessageContext } from './classes'
+import { MessageContext } from "../classes/MessageContext";
 
 /**
  * Send message to background.js on chrome extension

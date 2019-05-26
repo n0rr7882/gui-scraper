@@ -1,11 +1,14 @@
 import {
+    createCheckRecMsgCtx,
+    createRecEventMsgCtx,
+} from './core/msg-ctx'
+import {
     removeAllChildNodes,
     selectorToLastElement,
 } from './utils'
 import {
     EventInfo,
-    MessageContext,
-} from './utils/classes'
+} from './classes'
 import {
     errorLogger,
     sendToBackground,
@@ -24,20 +27,8 @@ const SHOULD_BE_POINTED_EVENTS = [
     'wheel'
 ]
 
-/**
- * Create MessageContext to send chrome extension background.js
- */
-function createCheckRecMsgCtx () {
-    return new MessageContext('reccheck', {})
-}
-
-/**
- * Create MessageContext to send chrome extension background.js
- * @param {EventInfo} eventInfo 
- */
-function createRecEventMsgCtx (eventInfo) {
-    return new MessageContext('recevent', eventInfo)
-}
+// When scaper starts recording, this var will be set true
+let RECORDING = false
 
 /**
  * Create new EventInfo and return it.
@@ -241,18 +232,8 @@ function removePointingBox() {
     }
 }
 
-// When scaper starts recording, this var will be set true
-let RECORDING = false
-
-setInterval(() => {
-    const newMsgCtx = createCheckRecMsgCtx()
-    sendToBackground(newMsgCtx).then(resMsgCtx => {
-        RECORDING = resMsgCtx.context.recording
-    }).catch(errorLogger)
-}, 100)
-
 /**
- * 
+ * Disable/Enable Context menu (mouse right click)
  * @param {boolean} enable 
  */
 function setContextMenu(enable) {
@@ -281,12 +262,20 @@ function point(e) {
         const eventInfo = getEventInfo(e)
         renderPointingBox(eventInfo)
         renderInfoBox(eventInfo)
-        setContextMenu(false)
     } else {
         removePointingBox()
-        setContextMenu(true)
     }
+    // Disable Context menu when on recording
+    setContextMenu(!RECORDING)
 }
+
+// check recording status from background.js and update
+setInterval(() => {
+    const newMsgCtx = createCheckRecMsgCtx()
+    sendToBackground(newMsgCtx).then(resMsgCtx => {
+        RECORDING = resMsgCtx.context.recording
+    }).catch(errorLogger)
+}, 100)
 
 // Set event handlers
 SHOULD_BE_RECORDED_EVENTS.forEach(e => document.addEventListener(e, record))

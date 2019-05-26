@@ -7,9 +7,7 @@ import {
 } from 'react-bootstrap'
 
 import ControlPanel from '../ControlPanel'
-import {
-    EventStorage
-} from '../../utils/classes'
+import { EventStorage } from "../../classes/EventStorage";
 
 const InfoTabs = props => {
     return (

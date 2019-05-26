@@ -2,7 +2,9 @@ import React, { Component } from 'react'
 import { Container } from 'react-bootstrap'
 
 import InfoTabs from '../InfoTabs'
-import { MessageContext } from '../../utils/classes'
+import {
+    MessageContext
+} from "../../classes";
 import sendToBackground from '../../utils/send-to-background'
 
 export class App extends Component {

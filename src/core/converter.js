@@ -1,8 +1,8 @@
 import {
     EventInfo,
-    EventInfoTarget,
-    EventStorage,
-} from './classes'
+} from '../classes/EventInfo'
+import { EventInfoTarget } from "../classes/EventInfoTarget";
+import { EventStorage } from "../classes/EventStorage";
 
 /**
  * 
