@@ -45,8 +45,8 @@ export function convertEventItem(eventInfo) {
 
 const CONVERTER_LIST = {
     'click': convertClick,
-    'dblclick': convertParentList,
     'contextmenu': convertRead,
+    'dblcontextmenu': convertParentList,
 }
 
 /**

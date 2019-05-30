@@ -3,12 +3,12 @@ export const EVENT_CONSTANTS = {
         variant: null,
         text: 'Click',
     },
-    dblclick: {
-        variant: 'info',
-        text: 'Read list',
-    },
     contextmenu: {
         variant: 'success',
         text: 'Read single',
-    }
+    },
+    dblcontextmenu: {
+        variant: 'info',
+        text: 'Read list',
+    },
 }

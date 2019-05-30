@@ -20,7 +20,6 @@ import './contentscript.scss'
 // To handle each event differently
 const SHOULD_BE_RECORDED_EVENT_HANDLERS = {
     'click': handleClick,
-    'dblclick': handleDblclick,
     'contextmenu': handleContextmenu,
 }
 
@@ -37,8 +36,8 @@ const SHOULD_BE_POINTED_EVENTS = [
 // When scaper starts recording, this var will be set true
 let RECORDING = false
 
-// To distinguish between click and double click
-let IS_DOUBLE_CLICK = false
+// To distinguish between contextmenu and double contextmenu
+let CONTEXTMENU_CLICK_COUNT = 0
 
 /**
  * Create new EventInfo and return it.
@@ -134,7 +133,7 @@ function createInfoBoxContent(eventInfo) {
 
         attrItem.appendChild(attrName)
         attrItem.appendChild(attrValue)
-        
+
         // attach into infoBoxAttrList
         infoBoxAttrList.appendChild(attrItem)
     }
@@ -178,7 +177,7 @@ function renderInfoBox(eventInfo) {
  * @param {string|number} identifier
  * @returns {Element}
  */
-function createPointingBox(identifier='default') {
+function createPointingBox(identifier = 'default') {
     const pointingBox = document.createElement('div')
     pointingBox.id = `guiScraperPointingElement_${identifier}`
     pointingBox.classList.add('guiScraperPointingElement')
@@ -190,7 +189,7 @@ function createPointingBox(identifier='default') {
  * @param {string|number} identifier
  * @returns {Element}
  */
-function getOrCreatePointingBox(identifier='default') {
+function getOrCreatePointingBox(identifier = 'default') {
     let pointingBox = document.getElementById(`guiScraperPointingElement_${identifier}`)
     if (!pointingBox) {
         pointingBox = createPointingBox(identifier)
@@ -228,7 +227,7 @@ function setPointingBoxEventStatus(pointingBox, eventType) {
  * Get or create pointingBox and update attribute from new eventInfo
  * @param {EventInfo} eventInfo 
  */
-function renderPointingBox(eventInfo, identifier='default') {
+function renderPointingBox(eventInfo, identifier = 'default') {
     const position = eventInfo.target.position
     const pointingBox = getOrCreatePointingBox(identifier)
     setPointingBoxPosition(pointingBox, position)
@@ -261,7 +260,7 @@ function renderParentPointingBox(eventInfo) {
  * Remove PointingBox from DOM
  * @param {string|number} identifier
  */
-function removePointingBox(identifier='default') {
+function removePointingBox(identifier = 'default') {
     const pointingBox = document.getElementById(`guiScraperPointingElement_${identifier}`)
     if (pointingBox) {
         pointingBox.remove()
@@ -273,7 +272,11 @@ function removePointingBox(identifier='default') {
  * @param {boolean} enable 
  */
 function setContextMenu(enable) {
-    document.body.setAttribute('oncontextmenu', `return ${enable ? 'true' : 'false'}`)
+    if (enable) {
+        document.body.removeAttribute('oncontextmenu')
+    } else {
+        document.body.setAttribute('oncontextmenu', 'return false;')
+    }
 }
 
 /**
@@ -281,23 +284,6 @@ function setContextMenu(enable) {
  * @param {EventInfo} eventInfo 
  */
 function handleClick(eventInfo) {
-    // To distinguish between click and double click
-    IS_DOUBLE_CLICK = false
-    setTimeout(() => {
-        if (!IS_DOUBLE_CLICK) {
-            console.log('click')
-            sendEventToBackground(eventInfo)
-        }
-    }, 250)
-}
-
-/**
- * 
- * @param {EventInfo} eventInfo 
- */
-function handleDblclick(eventInfo) {
-    // To distinguish between click and double click
-    IS_DOUBLE_CLICK = true
     sendEventToBackground(eventInfo)
 }
 
@@ -306,7 +292,23 @@ function handleDblclick(eventInfo) {
  * @param {EventInfo} eventInfo 
  */
 function handleContextmenu(eventInfo) {
-    sendEventToBackground(eventInfo)
+    // To distinguish between contextmenu and double contextmenu
+    CONTEXTMENU_CLICK_COUNT += 1
+    // To distinguish whether another contextmenu event is running
+    if (CONTEXTMENU_CLICK_COUNT == 1) {
+        const contextmenu_click_count = CONTEXTMENU_CLICK_COUNT
+        setTimeout(() => {
+            if (CONTEXTMENU_CLICK_COUNT > contextmenu_click_count) {
+                // set event type to custom type 'dblcontextmenu' force
+                eventInfo.type = 'dblcontextmenu'
+                sendEventToBackground(eventInfo)
+            } else {
+                // just single contextmenu event
+                sendEventToBackground(eventInfo)
+            }
+            CONTEXTMENU_CLICK_COUNT = 0
+        }, 250)
+    }
 }
 
 /**
