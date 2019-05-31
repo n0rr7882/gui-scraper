@@ -1,3 +1,4 @@
+import axios from 'axios'
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
 import {
@@ -75,7 +76,7 @@ export class ControlPanel extends Component {
         sendToBackground(msgCtx).catch(errorLogger)
     }
 
-    setJSONResult(result=null) {
+    setJSONResult(result = null) {
         if (result) {
             this.setState({
                 ...this.state,
@@ -90,7 +91,16 @@ export class ControlPanel extends Component {
     }
 
     handleRun(_) {
-        // TODO
+        const converted = convertStorage(this.props.storage)
+        const HOST = 'localhost'
+        const PORT = 50281
+        axios.post(`http://${HOST}:${PORT}/api/v1/scraper/run`, {
+            jsonObject: converted
+        }).then(res => {
+            this.setJSONResult(res.data)
+        }).catch(err => {
+            this.setJSONResult({ err })
+        })
     }
 
     handleExport(_) {
